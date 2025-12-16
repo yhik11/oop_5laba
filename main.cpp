@@ -271,6 +271,79 @@ void testSmartPointers() {
     std::cout << "   Объект явно освобождён" << std::endl;
 }
 
+void testSharedPointers() {
+    std::cout << "\n=== ТЕСТ 8: Умные указатели (shared_ptr) ===" << std::endl;
+
+    std::cout << "\n1. Создание shared_ptr:" << std::endl;
+    std::shared_ptr<Base> shared1(new Base(2300));
+    std::cout << "   Создан shared_ptr, use_count = " << shared1.use_count() << std::endl;
+
+    std::cout << "\n2. make_shared:" << std::endl;
+    auto shared2 = std::make_shared<Derived>(2400, 10.10);
+    std::cout << "   Создан shared_ptr через make_shared, use_count = " << shared2.use_count() << std::endl;
+
+    std::cout << "\n3. Копирование shared_ptr:" << std::endl;
+    std::shared_ptr<Base> shared3 = shared2;
+    std::cout << "   Скопирован shared_ptr, use_count = " << shared2.use_count() << std::endl;
+
+    std::cout << "\n4. Несколько владельцев:" << std::endl;
+    {
+        std::shared_ptr<Base> shared4 = shared2;
+        std::cout << "   Ещё один владелец, use_count = " << shared2.use_count() << std::endl;
+        // При выходе из блока shared4 уничтожится, счётчик уменьшится
+    }
+    std::cout << "   Один владелец уничтожен, use_count = " << shared2.use_count() << std::endl;
+
+    std::cout << "\n5. Циклические ссылки (проблема):" << std::endl;
+    class Node {
+    public:
+        std::shared_ptr<Node> next;
+        int id;
+
+        Node(int i) : id(i) {
+            std::cout << "     Создан Node #" << id << std::endl;
+        }
+
+        ~Node() {
+            std::cout << "     Уничтожен Node #" << id << std::endl;
+        }
+    };
+
+    auto node1 = std::make_shared<Node>(1);
+    auto node2 = std::make_shared<Node>(2);
+
+    node1->next = node2;
+    node2->next = node1; // ЦИКЛИЧЕСКАЯ ССЫЛКА!
+
+    std::cout << "   Создана циклическая ссылка, use_count node1 = " << node1.use_count() << std::endl;
+    std::cout << "   Объекты НЕ будут уничтожены автоматически!" << std::endl;
+
+    std::cout << "\n6. weak_ptr для разрыва циклических ссылок:" << std::endl;
+    class SafeNode {
+    public:
+        std::weak_ptr<SafeNode> next; // weak_ptr вместо shared_ptr!
+        int id;
+
+        SafeNode(int i) : id(i) {
+            std::cout << "     Создан SafeNode #" << id << std::endl;
+        }
+
+        ~SafeNode() {
+            std::cout << "     Уничтожен SafeNode #" << id << std::endl;
+        }
+    };
+
+    auto safeNode1 = std::make_shared<SafeNode>(3);
+    auto safeNode2 = std::make_shared<SafeNode>(4);
+
+    safeNode1->next = safeNode2;
+    safeNode2->next = safeNode1; // weak_ptr не увеличивает use_count
+
+    std::cout << "   Используем weak_ptr, use_count safeNode1 = " << safeNode1.use_count() << std::endl;
+    std::cout << "   Объекты будут корректно уничтожены" << std::endl;
+}
+
+
 int main() {
     setlocale(LC_ALL, "Russian");
     testVirtualVsNonVirtual();
@@ -280,6 +353,7 @@ int main() {
     testParameterPassing();
     testReturnFromFunctions();
     testSmartPointers();
+    testSharedPointers();
 
     return 0;
 }
