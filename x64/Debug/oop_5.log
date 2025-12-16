@@ -1,2 +1,3 @@
 ﻿  main.cpp
+C:\Users\79173\source\repos\oop_5\oop_5\main.cpp(195,1): warning C4172: возвращаемый адрес локальной переменной или временного : local
   oop_5.vcxproj -> C:\Users\79173\source\repos\oop_5\x64\Debug\oop_5.exe
