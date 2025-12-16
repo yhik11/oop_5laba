@@ -125,6 +125,51 @@ void testTypeCasting() {
     delete obj2;
 }
 
+void funcByValue(Base obj) {
+    std::cout << "  funcByValue: получил объект #" << obj.getId() << std::endl;
+}
+
+void funcByPointer(Base* obj) {
+    std::cout << "  funcByPointer: получил указатель на объект #" << obj->getId() << std::endl;
+}
+
+void funcByReference(Base& obj) {
+    std::cout << "  funcByReference: получил ссылку на объект #" << obj.getId() << std::endl;
+}
+
+void testParameterPassing() {
+    std::cout << "\n=== ТЕСТ 5: Передача объектов как параметров ===" << std::endl;
+
+    Base baseObj(1100);
+    Derived derivedObj(1200, 5.55);
+
+    std::cout << "\n1. Передача Base по значению:" << std::endl;
+    funcByValue(baseObj);
+
+    std::cout << "\n2. Передача Base по указателю:" << std::endl;
+    funcByPointer(&baseObj);
+
+    std::cout << "\n3. Передача Base по ссылке:" << std::endl;
+    funcByReference(baseObj);
+
+    std::cout << "\n4. Передача Derived как Base (срезка):" << std::endl;
+    std::cout << "   funcByValue(derivedObj):" << std::endl;
+    funcByValue(derivedObj); // СРЕЗКА! Теряется часть Derived
+
+    std::cout << "\n5. Передача Derived по указателю (полиморфизм):" << std::endl;
+    std::cout << "   funcByPointer(&derivedObj):" << std::endl;
+    funcByPointer(&derivedObj);
+
+    std::cout << "\n6. Передача Derived по ссылке (полиморфизм):" << std::endl;
+    std::cout << "   funcByReference(derivedObj):" << std::endl;
+    funcByReference(derivedObj);
+
+    std::cout << "\n7. Проблема срезки (object slicing):" << std::endl;
+    Base sliced = derivedObj; // Создаётся новый Base, копируются только поля Base
+    std::cout << "   Base sliced = derivedObj; // Произошла срезка" << std::endl;
+    std::cout << "   sliced.className() = " << sliced.className() << " (всегда Base)" << std::endl;
+}
+
 
 int main() {
     setlocale(LC_ALL, "Russian");
@@ -132,6 +177,7 @@ int main() {
     testVirtualDestructors();
     testClassChecking();
     testTypeCasting();
+    testParameterPassing();
 
     return 0;
 }
