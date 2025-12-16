@@ -170,6 +170,65 @@ void testParameterPassing() {
     std::cout << "   sliced.className() = " << sliced.className() << " (всегда Base)" << std::endl;
 }
 
+Base returnByValue() {
+    Base local(1300);
+    std::cout << "  returnByValue: создал локальный объект #" << local.getId() << std::endl;
+    return local; // Возможна RVO (Return Value Optimization)
+}
+
+Base* returnByPointer() {
+    Base* obj = new Base(1400);
+    std::cout << "  returnByPointer: создал динамический объект #" << obj->getId() << std::endl;
+    return obj;
+}
+
+Base& returnByReference() {
+    static Base staticObj(1500); // static для демонстрации
+    std::cout << "  returnByReference: возвращаю ссылку на static объект #" << staticObj.getId() << std::endl;
+    return staticObj;
+}
+
+Base* returnBadPointer() {
+    Base local(1600);
+    std::cout << "  returnBadPointer: создал ЛОКАЛЬНЫЙ объект #" << local.getId() << std::endl;
+    return &local; // ОПАСНО! Возвращаем указатель на локальную переменную
+}
+Base* createDerived()
+{
+
+    return new Derived(1700, 7.77);
+}
+
+void testReturnFromFunctions() {
+    std::cout << "\n=== ТЕСТ 6: Возврат объектов из функций ===" << std::endl;
+
+    std::cout << "\n1. Возврат по значению (RVO):" << std::endl;
+    Base obj1 = returnByValue();
+    std::cout << "   Получили объект #" << obj1.getId() << std::endl;
+
+    std::cout << "\n2. Возврат по указателю (динамическая память):" << std::endl;
+    Base* obj2 = returnByPointer();
+    std::cout << "   Получили указатель на объект #" << obj2->getId() << std::endl;
+    delete obj2; // НЕ ЗАБЫТЬ удалить!
+
+    std::cout << "\n3. Возврат по ссылке (static переменная):" << std::endl;
+    Base& obj3 = returnByReference();
+    std::cout << "   Получили ссылку на объект #" << obj3.getId() << std::endl;
+
+    std::cout << "\n4. ОПАСНО: возврат указателя на локальную переменную:" << std::endl;
+    Base* badPtr = returnBadPointer();
+    std::cout << "   Получили указатель, но объект уже уничтожен!" << std::endl;
+    // НЕ ИСПОЛЬЗОВАТЬ badPtr!
+
+    std::cout << "\n5. Возврат полиморфного объекта:" << std::endl;
+    
+
+    Base* polyObj = createDerived();
+    std::cout << "   Создан полиморфный объект #" << polyObj->getId() << std::endl;
+    polyObj->print(); // Вызовется Derived::print()
+    delete polyObj;
+}
+
 
 int main() {
     setlocale(LC_ALL, "Russian");
@@ -178,6 +237,7 @@ int main() {
     testClassChecking();
     testTypeCasting();
     testParameterPassing();
+    testReturnFromFunctions();
 
     return 0;
 }
