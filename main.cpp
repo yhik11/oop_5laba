@@ -2,6 +2,7 @@
 #include "base.h"
 #include "derived.h"
 #include <typeinfo>
+#include <memory>
 
 void testVirtualVsNonVirtual() {
     std::cout << "\n=== ТЕСТ 1: Виртуальные vs Невиртуальные методы ===" << std::endl;
@@ -229,6 +230,46 @@ void testReturnFromFunctions() {
     delete polyObj;
 }
 
+void testSmartPointers() {
+    std::cout << "\n=== ТЕСТ 7: Умные указатели (unique_ptr) ===" << std::endl;
+
+    std::cout << "\n1. Создание unique_ptr:" << std::endl;
+    std::unique_ptr<Base> unique1(new Base(1800));
+    std::cout << "   Создан unique_ptr с объектом #" << unique1->getId() << std::endl;
+
+    std::cout << "\n2. make_unique (C++14):" << std::endl;
+    auto unique2 = std::make_unique<Derived>(1900, 8.88);
+    std::cout << "   Создан unique_ptr через make_unique" << std::endl;
+    unique2->print();
+
+    std::cout << "\n3. Перемещение unique_ptr:" << std::endl;
+    std::unique_ptr<Base> unique3 = std::move(unique1);
+    std::cout << "   unique_ptr перемещён, оригинал теперь nullptr" << std::endl;
+    if (!unique1) {
+        std::cout << "   unique1 теперь nullptr" << std::endl;
+    }
+
+    std::cout << "\n4. НЕЛЬЗЯ копировать unique_ptr:" << std::endl;
+    // std::unique_ptr<Base> unique4 = unique3; // Ошибка компиляции!
+    std::cout << "   Копирование запрещено" << std::endl;
+
+    std::cout << "\n5. Освобождение при выходе из области видимости:" << std::endl;
+    {
+        std::unique_ptr<Base> localUnique(new Base(2000));
+        std::cout << "   Создан локальный unique_ptr" << std::endl;
+        // При выходе из блока вызовется деструктор автоматически
+    }
+    std::cout << "   Локальный unique_ptr автоматически уничтожен" << std::endl;
+
+    std::cout << "\n6. Полиморфизм с unique_ptr:" << std::endl;
+    std::unique_ptr<Base> polyUnique = std::make_unique<Derived>(2100, 9.99);
+    polyUnique->print(); // Работает полиморфизм
+
+    std::cout << "\n7. Ручное освобождение:" << std::endl;
+    std::unique_ptr<Base> manualUnique(new Base(2200));
+    manualUnique.reset(); // Явное освобождение
+    std::cout << "   Объект явно освобождён" << std::endl;
+}
 
 int main() {
     setlocale(LC_ALL, "Russian");
@@ -238,6 +279,7 @@ int main() {
     testTypeCasting();
     testParameterPassing();
     testReturnFromFunctions();
+    testSmartPointers();
 
     return 0;
 }
