@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <cmath>
 
 void testVirtualVsNonVirtual() {
     std::cout << "\n=== ТЕСТ 1: Виртуальные vs Невиртуальные методы ===" << std::endl;
@@ -482,6 +483,8 @@ void testVirtualConstructors() {
 }
 
 
+
+
 class TestBase {
 public:
     virtual ~TestBase() {}
@@ -545,6 +548,125 @@ void testMethodCalls() {
     delete polyObj; // Если деструктор не виртуальный - проблема!
 }
 
+class Shape {
+protected:
+    double x, y;
+
+public:
+    Shape(double x, double y) : x(x), y(y) {
+        std::cout << "  Shape конструктор (" << x << ", " << y << ")" << std::endl;
+    }
+
+    virtual ~Shape() {
+        std::cout << "  Shape деструктор" << std::endl;
+    }
+
+    virtual double area() const = 0;
+    virtual void draw() const {
+        std::cout << "  Рисую фигуру в (" << x << ", " << y << ")" << std::endl;
+    }
+
+    virtual void move(double dx, double dy) {
+        x += dx;
+        y += dy;
+    }
+
+    virtual std::string type() const = 0;
+};
+
+class Circle : public Shape {
+private:
+    double radius;
+
+public:
+    Circle(double x, double y, double r) : Shape(x, y), radius(r) {
+        std::cout << "  Circle конструктор, радиус=" << radius << std::endl;
+    }
+
+    ~Circle() override {
+        std::cout << "  Circle деструктор" << std::endl;
+    }
+
+    double area() const override {
+        return 3.14159 * radius * radius;
+    }
+
+    void draw() const override {
+        std::cout << "  Рисую круг в (" << x << ", " << y << ") радиус=" << radius
+            << " площадь=" << area() << std::endl;
+    }
+
+    std::string type() const override {
+        return "Circle";
+    }
+};
+
+class Rectangle : public Shape {
+private:
+    double width, height;
+
+public:
+    Rectangle(double x, double y, double w, double h)
+        : Shape(x, y), width(w), height(h) {
+        std::cout << "  Rectangle конструктор " << width << "x" << height << std::endl;
+    }
+
+    ~Rectangle() override {
+        std::cout << "  Rectangle деструктор" << std::endl;
+    }
+
+    double area() const override {
+        return width * height;
+    }
+
+    void draw() const override {
+        std::cout << "  Рисую прямоугольник в (" << x << ", " << y << ") "
+            << width << "x" << height << " площадь=" << area() << std::endl;
+    }
+
+    std::string type() const override {
+        return "Rectangle";
+    }
+};
+
+void testShapesExample() {
+    std::cout << "\n=== ТЕСТ 12: Практический пример - геометрические фигуры ===" << std::endl;
+
+    std::vector<std::unique_ptr<Shape>> shapes;
+
+    shapes.push_back(std::make_unique<Circle>(10, 20, 5));
+    shapes.push_back(std::make_unique<Rectangle>(30, 40, 8, 6));
+    shapes.push_back(std::make_unique<Circle>(50, 60, 3));
+    shapes.push_back(std::make_unique<Rectangle>(70, 80, 10, 12));
+
+    std::cout << "\n1. Рисование всех фигур:" << std::endl;
+    for (const auto& shape : shapes) {
+        shape->draw();
+    }
+
+    std::cout << "\n2. Подсчёт общей площади:" << std::endl;
+    double totalArea = 0;
+    for (const auto& shape : shapes) {
+        totalArea += shape->area();
+    }
+    std::cout << "   Общая площадь: " << totalArea << std::endl;
+
+    std::cout << "\n3. Перемещение всех фигур:" << std::endl;
+    for (auto& shape : shapes) {
+        shape->move(5, 5);
+        shape->draw();
+    }
+
+    std::cout << "\n4. Проверка типов и безопасное приведение:" << std::endl;
+    for (const auto& shape : shapes) {
+        if (shape->type() == "Circle") {
+            std::cout << "   Найден круг, площадь=" << shape->area() << std::endl;
+        }
+    }
+
+    std::cout << "\n5. Автоматическое уничтожение через unique_ptr:" << std::endl;
+}
+
 int main() {
     setlocale(LC_ALL, "Russian");
     testVirtualVsNonVirtual();
@@ -558,6 +680,7 @@ int main() {
     testComposition();
     testVirtualConstructors();
     testMethodCalls();
+    testShapesExample();
 
 
 
