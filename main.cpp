@@ -482,6 +482,69 @@ void testVirtualConstructors() {
 }
 
 
+class TestBase {
+public:
+    virtual ~TestBase() {}
+
+    void method1() {
+        std::cout << "  TestBase::method1() вызван" << std::endl;
+        method2(); // Важно: какой method2 вызовется?
+    }
+
+    void method2() {
+        std::cout << "  TestBase::method2() (невиртуальный)" << std::endl;
+    }
+
+    virtual void method3() {
+        std::cout << "  TestBase::method3() вызван" << std::endl;
+        method4(); // Виртуальный вызов внутри виртуального метода
+    }
+
+    virtual void method4() {
+        std::cout << "  TestBase::method4() (виртуальный)" << std::endl;
+    }
+};
+
+class TestDerived : public TestBase {
+public:
+    void method2() { // Перекрытие невиртуального метода
+        std::cout << "  TestDerived::method2() (перекрытие)" << std::endl;
+    }
+
+    void method3() override {
+        std::cout << "  TestDerived::method3() вызван" << std::endl;
+        TestBase::method3(); // Явный вызов базового метода
+    }
+
+    void method4() override {
+        std::cout << "  TestDerived::method4() (переопределение)" << std::endl;
+    }
+};
+
+void testMethodCalls() {
+    std::cout << "\n=== ТЕСТ 11: Методы, вызывающие другие методы ===" << std::endl;
+
+    std::cout << "\n1. Невиртуальный метод вызывает невиртуальный:" << std::endl;
+    TestDerived derived1;
+    TestBase* basePtr1 = &derived1;
+
+    std::cout << "   basePtr1->method1():" << std::endl;
+    basePtr1->method1(); // method1 -> TestBase::method2()
+
+    std::cout << "\n2. Виртуальный метод вызывает виртуальный:" << std::endl;
+    std::cout << "   basePtr1->method3():" << std::endl;
+    basePtr1->method3(); // TestDerived::method3() -> TestBase::method3() -> TestDerived::method4()
+
+    std::cout << "\n3. Прямой вызов у объекта:" << std::endl;
+    TestDerived derived2;
+    std::cout << "   derived2.method1():" << std::endl;
+    derived2.method1();
+
+    std::cout << "\n4. Важность виртуального деструктора в полиморфизме:" << std::endl;
+    TestBase* polyObj = new TestDerived();
+    delete polyObj; // Если деструктор не виртуальный - проблема!
+}
+
 int main() {
     setlocale(LC_ALL, "Russian");
     testVirtualVsNonVirtual();
@@ -494,7 +557,7 @@ int main() {
     testSharedPointers();
     testComposition();
     testVirtualConstructors();
-
+    testMethodCalls();
 
 
 
