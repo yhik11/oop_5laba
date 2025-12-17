@@ -3,6 +3,9 @@
 #include "derived.h"
 #include <typeinfo>
 #include <memory>
+#include <vector>
+#include <unordered_map>
+#include <functional>
 
 void testVirtualVsNonVirtual() {
     std::cout << "\n=== ТЕСТ 1: Виртуальные vs Невиртуальные методы ===" << std::endl;
@@ -343,6 +346,141 @@ void testSharedPointers() {
     std::cout << "   Объекты будут корректно уничтожены" << std::endl;
 }
 
+class Composite {
+private:
+    std::unique_ptr<Base> component1;
+    std::shared_ptr<Base> component2;
+
+public:
+    Composite(int val1, int val2, double extra) {
+        component1 = std::make_unique<Derived>(val1, extra);
+        component2 = std::make_shared<Base>(val2);
+        std::cout << "  Composite конструктор" << std::endl;
+    }
+
+    ~Composite() {
+        std::cout << "  Composite деструктор" << std::endl;
+    }
+
+    void print() const {
+        std::cout << "  Composite содержит:" << std::endl;
+        std::cout << "    component1: ";
+        component1->print();
+        std::cout << "    component2: ";
+        component2->print();
+    }
+};
+
+void testComposition() {
+    std::cout << "\n=== ТЕСТ 9: Композиция объектов ===" << std::endl;
+
+    std::cout << "\n1. Композиция с unique_ptr:" << std::endl;
+    Composite comp1(2500, 2600, 11.11);
+    comp1.print();
+
+    std::cout << "\n2. Порядок уничтожения:" << std::endl;
+    {
+        Composite comp2(2700, 2800, 12.12);
+        std::cout << "   Создан временный Composite" << std::endl;
+    }
+    std::cout << "   Временный Composite уничтожен" << std::endl;
+
+    std::cout << "\n3. Композиция с полиморфными объектами:" << std::endl;
+    class PolymorphicContainer {
+    private:
+        std::vector<std::unique_ptr<Base>> objects;
+
+    public:
+        void add(std::unique_ptr<Base> obj) {
+            objects.push_back(std::move(obj));
+        }
+
+        void printAll() const {
+            for (const auto& obj : objects) {
+                obj->print();
+            }
+        }
+    };
+
+    PolymorphicContainer container;
+    container.add(std::make_unique<Base>(2900));
+    container.add(std::make_unique<Derived>(3000, 13.13));
+    container.add(std::make_unique<Base>(3100));
+
+    std::cout << "   Содержимое контейнера:" << std::endl;
+    container.printAll();
+}
+
+void testVirtualConstructors() {
+    std::cout << "\n=== ТЕСТ 10: Виртуальные конструкторы и фабрики ===" << std::endl;
+
+    std::cout << "\n1. В C++ НЕЛЬЗЯ создать виртуальный конструктор:" << std::endl;
+    std::cout << "   virtual Base() { } // Ошибка компиляции!" << std::endl;
+
+    std::cout << "\n2. Паттерн 'Фабричный метод' как решение:" << std::endl;
+
+    class Creator {
+    public:
+        virtual ~Creator() {}
+        virtual std::unique_ptr<Base> create() const = 0;
+    };
+
+    class BaseCreator : public Creator {
+    public:
+        std::unique_ptr<Base> create() const override {
+            return std::make_unique<Base>(3200);
+        }
+    };
+
+    class DerivedCreator : public Creator {
+    public:
+        std::unique_ptr<Base> create() const override {
+            return std::make_unique<Derived>(3300, 14.14);
+        }
+    };
+
+    BaseCreator baseCreator;
+    DerivedCreator derivedCreator;
+
+    auto obj1 = baseCreator.create();
+    auto obj2 = derivedCreator.create();
+
+    std::cout << "   Созданы объекты через фабрики:" << std::endl;
+    obj1->print();
+    obj2->print();
+
+    std::cout << "\n3. Фабрика с регистрацией типов:" << std::endl;
+    class ObjectFactory {
+    private:
+        std::unordered_map<std::string, std::function<std::unique_ptr<Base>()>> creators;
+
+    public:
+        void registerType(const std::string& typeName, std::function<std::unique_ptr<Base>()> creator) {
+            creators[typeName] = creator;
+        }
+
+        std::unique_ptr<Base> create(const std::string& typeName) const {
+            auto it = creators.find(typeName);
+            if (it != creators.end()) {
+                return it->second();
+            }
+            return nullptr;
+        }
+    };
+
+    ObjectFactory factory;
+    factory.registerType("Base", []() { return std::make_unique<Base>(3400); });
+    factory.registerType("Derived", []() { return std::make_unique<Derived>(3500, 15.15); });
+
+    auto factoryObj1 = factory.create("Base");
+    auto factoryObj2 = factory.create("Derived");
+    auto factoryObj3 = factory.create("Unknown");
+
+    if (factoryObj1) factoryObj1->print();
+    if (factoryObj2) factoryObj2->print();
+    if (!factoryObj3) std::cout << "   Неизвестный тип не создан" << std::endl;
+}
+
 
 int main() {
     setlocale(LC_ALL, "Russian");
@@ -354,6 +492,11 @@ int main() {
     testReturnFromFunctions();
     testSmartPointers();
     testSharedPointers();
+    testComposition();
+    testVirtualConstructors();
+
+
+
 
     return 0;
 }
